@@ -1,0 +1,44 @@
+{
+    "B1": {
+        "titel": "Harry Potter",
+        "författare": "J. K Rowling",
+        "antal": 2,
+        "tillgängliga": 2,
+        "låntagare": []
+    },
+    "B2": {
+        "titel": "Dune",
+        "författare": "Frank Herbert",
+        "antal": 1,
+        "tillgängliga": 1,
+        "låntagare": []
+    },
+    "B3": {
+        "titel": "Agnes Cecilia",
+        "författare": "Vet Inte",
+        "antal": 3,
+        "tillgängliga": 0,
+        "låntagare": [
+            "lina",
+            "martina",
+            "martina"
+        ]
+    },
+    "B4": {
+        "titel": "Hunger Games",
+        "författare": "Vet Inte",
+        "antal": 2,
+        "tillgängliga": 0,
+        "låntagare": [
+            "lina",
+            "sanna"
+        ]
+    },
+    "B5": {
+        "titel": "Härnstark Jr",
+        "författare": "Vet Inte",
+        "antal": 20,
+        "tillgängliga": 20,
+        "låntagare": []
+    }
+}
