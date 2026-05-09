@@ -120,33 +120,45 @@ if password == ADMIN_PASSWORD:
 
     st.sidebar.subheader("❌ Ta bort bok")
 
+        # --- steg 1: välj bok ---
     remove_choice = st.sidebar.selectbox(
         "Välj bok att ta bort",
-        [f"{bid} - {data['titel']}" for bid, data in sorted_books()],
-        key="remove_select",
+        [f"{bid} - {data['titel']}" for bid, data in bibliotek.items()],
+        key="remove_select"
     )
-
+    
     if remove_choice:
         book_id = remove_choice.split(" - ")[0]
         titel = bibliotek[book_id]["titel"]
+    
+        # --- klicka initiera delete ---
+        if st.sidebar.button("🗑 Ta bort bok", key="delete_btn"):
+            st.session_state["confirm_delete"] = book_id
+    
+    # --- steg 2: bekräftelse ---
+    if "confirm_delete" in st.session_state:
+        book_id = st.session_state["confirm_delete"]
+        titel = bibliotek[book_id]["titel"]
+    
+        st.sidebar.warning(f"Är du säker på att du vill ta bort '{titel}'?")
+    
+        col1, col2 = st.sidebar.columns(2)
+    
+        with col1:
+            if st.button("Ja, ta bort", key="confirm_delete_btn"):
+                del bibliotek[book_id]
+                save_data()
+                st.sidebar.success(f"{titel} borttagen")
+    
+                del st.session_state["confirm_delete"]
+                st.rerun()
 
-        if st.sidebar.button("Ta bort bok", key="delete_btn"):
-            st.sidebar.warning(f"Är du säker på att du vill ta bort '{titel}'?")
+    with col2:
+        if st.button("Avbryt", key="cancel_delete_btn"):
+            st.sidebar.info("Avbrutet")
 
-            col1, col2 = st.sidebar.columns(2)
-
-            with col1:
-                if st.button("Ja, ta bort", key="confirm_delete"):
-                    del bibliotek[book_id]
-                    st.sidebar.success(f"{titel} borttagen")
-                    save_data()
-                    st.rerun()
-
-            with col2:
-                if st.button("Avbryt", key="cancel_delete"):
-                    st.sidebar.info("Åtgärd avbruten")
-                    save_data()
-                    st.rerun()
+            del st.session_state["confirm_delete"]
+            st.rerun()
 
     st.sidebar.subheader("✏️ Editera bok")
 
