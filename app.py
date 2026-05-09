@@ -19,7 +19,7 @@ bibliotek = load_data()
 
 
 def sorted_books():
-    return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
+    return sorted(bibliotek.items(), key=lambda x: x[1]["titel"].lower())
 
 
 def save_data():
@@ -123,7 +123,7 @@ if password == ADMIN_PASSWORD:
         # --- steg 1: välj bok ---
     remove_choice = st.sidebar.selectbox(
         "Välj bok att ta bort",
-        [f"{bid} - {data['titel']}" for bid, data in bibliotek.items()],
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books()],
         key="remove_select"
     )
     
@@ -153,12 +153,12 @@ if password == ADMIN_PASSWORD:
                 del st.session_state["confirm_delete"]
                 st.rerun()
 
-    with col2:
-        if st.button("Avbryt", key="cancel_delete_btn"):
-            st.sidebar.info("Avbrutet")
+        with col2:
+            if st.button("Avbryt", key="cancel_delete_btn"):
+                st.sidebar.info("Avbrutet")
 
-            del st.session_state["confirm_delete"]
-            st.rerun()
+                del st.session_state["confirm_delete"]
+                st.rerun()
 
     st.sidebar.subheader("✏️ Editera bok")
 
