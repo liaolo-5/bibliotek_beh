@@ -58,7 +58,7 @@ for book_id, data in sorted_books():
 
                 if namn.strip() == "":
                     st.warning("⚠️ Skriv namn först")
-            
+
                 elif data["tillgängliga"] <= 0:
                     st.error("❌ Boken är slut")
             
@@ -70,8 +70,7 @@ for book_id, data in sorted_books():
             
                     st.success(f"✅ {namn} lånade {data['titel']}")
             
-                    # töm inputfältet
-                    st.session_state[input_key] = ""
+                    del st.session_state[input_key]
             
                     st.rerun()
 
