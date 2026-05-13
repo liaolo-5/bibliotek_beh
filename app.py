@@ -51,6 +51,7 @@ for book_id, data in sorted_books():
             st.write(f"📦 Tillgängliga: {data['tillgängliga']}")
 
         with col2:
+            input_key = f"name_{book_id}"
             namn = st.text_input("Namn", key=input_key)
 
             if st.button("Låna", key=f"loan_{book_id}"):
