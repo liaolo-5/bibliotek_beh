@@ -80,7 +80,7 @@ if val_bok:
     book_id = val_bok.split(" - ")[0]
     data = bibliotek[book_id]
 
-    namn = st.sidebar.selectbox("Vem returnerar?", data["låntagare"], key="return_name")
+    namn = st.sidebar.selectbox("Vem ska returnera?", data["låntagare"], key="return_name")
 
     if st.sidebar.button("Returnera", key="return_btn"):
         data["låntagare"].remove(namn)
