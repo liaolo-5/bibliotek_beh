@@ -51,19 +51,28 @@ for book_id, data in sorted_books():
             st.write(f"📦 Tillgängliga: {data['tillgängliga']}")
 
         with col2:
-            namn = st.text_input("Namn", key=f"name_{book_id}")
+            namn = st.text_input("Namn", key=input_key)
 
             if st.button("Låna", key=f"loan_{book_id}"):
-                if data["tillgängliga"] > 0 and namn.strip() != "":
-                    data["tillgängliga"] -= 1
-                    data["låntagare"].append(namn)
-                    st.success(f"{namn} lånade {data['titel']}")
-                elif namn.strip() == "":
-                    st.error("Skriv namn först")
+
+                if namn.strip() == "":
+                    st.warning("⚠️ Skriv namn först")
+            
+                elif data["tillgängliga"] <= 0:
+                    st.error("❌ Boken är slut")
+            
                 else:
-                    st.error("Slut")
-                save_data()
-                st.rerun()
+                    data["tillgängliga"] -= 1
+                    data["låntagare"].append(namn.strip().title())
+            
+                    save_data()
+            
+                    st.success(f"✅ {namn} lånade {data['titel']}")
+            
+                    # töm inputfältet
+                    st.session_state[input_key] = ""
+            
+                    st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
 
