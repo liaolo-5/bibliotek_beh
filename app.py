@@ -1,21 +1,51 @@
 import streamlit as st
-import json
 import os
+import sqlite3
+
+conn = sqlite3.connect("bibliotek.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS books (
+    id TEXT PRIMARY KEY,
+    titel TEXT,
+    forfattare TEXT,
+    antal INTEGER,
+    tillgangliga INTEGER,
+    lantagare TEXT
+)
+""")
+
+conn.commit()
 
 ADMIN_PASSWORD = "211"
 
 st.title("📚 BEH Bibliotek")
 
 
-# --- DATA (din struktur) ---
-def load_data():
-    if os.path.exists("bibliotek.json"):
-        with open("bibliotek.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+def get_books():
+    cursor.execute("""
+    SELECT * FROM books
+    ORDER BY titel COLLATE NOCASE
+    """)
+
+    rows = cursor.fetchall()
+
+    bibliotek = {}
+
+    for row in rows:
+        bibliotek[row[0]] = {
+            "titel": row[1],
+            "författare": row[2],
+            "antal": row[3],
+            "tillgängliga": row[4],
+            "låntagare": row[5].split(",") if row[5] else []
+        }
+
+    return bibliotek
 
 
-bibliotek = load_data()
+bibliotek = get_books()
 
 
 def sorted_books():
@@ -65,8 +95,19 @@ for book_id, data in sorted_books():
                 else:
                     data["tillgängliga"] -= 1
                     data["låntagare"].append(namn.strip().title())
-            
-                    save_data()
+
+                    cursor.execute("""
+                    UPDATE books
+                    SET tillgangliga = ?,
+                        lantagare = ?
+                    WHERE id = ?
+                    """, (
+                        data["tillgängliga"],
+                        ",".join(data["låntagare"]),
+                        book_id
+                    ))
+                    
+                    conn.commit()
             
                     st.success(f"✅ {namn} lånade {data['titel']}")
             
@@ -96,8 +137,19 @@ if val_bok:
         data["tillgängliga"] += 1
 
         st.sidebar.success(f"{namn} returnerade {data['titel']}")
-        save_data()
-        st.rerun()
+
+        cursor.execute("""
+        UPDATE books
+        SET tillgangliga = ?,
+            lantagare = ?
+        WHERE id = ?
+        """, (
+            data["tillgängliga"],
+            ",".join(data["låntagare"]),
+            book_id
+        ))
+        
+        conn.commit()
 
 st.sidebar.header("🔐 Admin")
 
@@ -115,17 +167,21 @@ if password == ADMIN_PASSWORD:
     if st.sidebar.button("Lägg till bok"):
         book_id = f"B{len(bibliotek) + 1}"
 
-        bibliotek[book_id] = {
-            "titel": titel,
-            "författare": författare,
-            "antal": int(antal),
-            "tillgängliga": int(antal),
-            "låntagare": [],
-        }
+        cursor.execute("""
+        INSERT INTO books
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            book_id,
+            titel,
+            författare,
+            int(antal),
+            int(antal),
+            ""
+        ))
+
+        conn.commit()
 
         st.sidebar.success(f"Bok tillagd: {titel}")
-        save_data()
-        st.rerun()
 
     st.sidebar.subheader("❌ Ta bort bok")
 
@@ -155,8 +211,8 @@ if password == ADMIN_PASSWORD:
     
         with col1:
             if st.button("Ja, ta bort", key="confirm_delete_btn"):
-                del bibliotek[book_id]
-                save_data()
+                cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
+                conn.commit()
                 st.sidebar.success(f"{titel} borttagen")
     
                 del st.session_state["confirm_delete"]
@@ -199,11 +255,21 @@ if password == ADMIN_PASSWORD:
         if st.sidebar.button("Spara ändringar"):
             skillnad = int(nytt_antal) - int(book["antal"])
 
-            book["titel"] = ny_titel
-            book["författare"] = ny_forfattare
-            book["antal"] = int(nytt_antal)
-            book["tillgängliga"] += skillnad
+            cursor.execute("""
+            UPDATE books
+            SET titel = ?,
+                forfattare = ?,
+                antal = ?,
+                tillgangliga = ?
+            WHERE id = ?
+            """, (
+                ny_titel,
+                ny_forfattare,
+                int(nytt_antal),
+                int(book["tillgängliga"]) + skillnad,
+                book_id
+            ))
+            
+            conn.commit()
 
             st.sidebar.success("Boken uppdaterad!")
-            save_data()
-            st.rerun()
