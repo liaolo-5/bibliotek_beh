@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS books (
 
 conn.commit()
 
-ADMIN_PASSWORD = "211"
+ADMIN_PASSWORD = "admin"
 
 st.title("📚 BEH Bibliotek")
 if "success_message" in st.session_state:
