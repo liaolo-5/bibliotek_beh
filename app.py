@@ -25,7 +25,7 @@ if "success_message" in st.session_state:
     del st.session_state["success_message"]
 
 
-def get_books():
+def get_bibliotek():
     cursor.execute("""
     SELECT * FROM books
     ORDER BY titel COLLATE NOCASE
@@ -47,11 +47,10 @@ def get_books():
     return bibliotek
 
 
-bibliotek = get_books()
-
-
 def sorted_books():
-    return bibliotek.items()
+    return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
+
+bibliotek = get_bibliotek()
 
 
 # --- SÖK ---
@@ -80,6 +79,8 @@ for book_id, data in sorted_books():
         with col2:
             input_key = f"name_{book_id}"
         
+            if input_key not in st.session_state:
+                st.session_state[input_key] = ""
             namn = st.text_input("Namn", key=input_key)
         
             if st.button("Låna", key=f"loan_{book_id}"):
@@ -111,6 +112,7 @@ for book_id, data in sorted_books():
                     conn.commit()
         
                     st.success(f"✅ {namn.title()} lånade {data['titel']}")
+                    st.session_state[input_key] = ""
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
