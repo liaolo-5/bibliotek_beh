@@ -155,15 +155,34 @@ if password == ADMIN_PASSWORD:
 
     st.sidebar.subheader("➕ Lägg till bok")
 
-    titel = st.sidebar.text_input("Titel").title().strip()
-    författare = st.sidebar.text_input("Författare").title().strip()
-    antal = st.sidebar.number_input("Antal", min_value=1, step=1)
+titel = st.sidebar.text_input("Titel").title().strip()
+författare = st.sidebar.text_input("Författare").title().strip()
+antal = st.sidebar.number_input("Antal", min_value=1, step=1)
 
-    if st.sidebar.button("Lägg till bok"):
-        cursor.execute("SELECT COUNT(*) FROM books")
-        count = cursor.fetchone()[0]
-        
-        book_id = f"B{count + 1}"
+if st.sidebar.button("Lägg till bok"):
+
+    if not titel:
+        st.sidebar.error("Titel saknas")
+
+    elif not författare:
+        st.sidebar.error("Författare saknas")
+
+    else:
+        cursor.execute("""
+        SELECT id
+        FROM books
+        ORDER BY CAST(SUBSTR(id, 2) AS INTEGER) DESC
+        LIMIT 1
+        """)
+
+        last = cursor.fetchone()
+
+        if last:
+            next_id = int(last[0][1:]) + 1
+        else:
+            next_id = 1
+
+        book_id = f"B{next_id}"
 
         cursor.execute("""
         INSERT INTO books
@@ -252,8 +271,14 @@ if password == ADMIN_PASSWORD:
         )
 
         if st.sidebar.button("Spara ändringar"):
-            skillnad = int(nytt_antal) - int(book["antal"])
 
+            skillnad = int(nytt_antal) - int(book["antal"])
+        
+            nytt_tillgangligt = max(
+                0,
+                int(book["tillgängliga"]) + skillnad
+            )
+        
             cursor.execute("""
             UPDATE books
             SET titel = ?,
@@ -265,11 +290,13 @@ if password == ADMIN_PASSWORD:
                 ny_titel,
                 ny_forfattare,
                 int(nytt_antal),
-                int(book["tillgängliga"]) + skillnad,
+                nytt_tillgangligt,
                 book_id
             ))
-            
+        
             conn.commit()
-
+        
             st.sidebar.success("Boken uppdaterad!")
             st.rerun()
+
+conn.close()
