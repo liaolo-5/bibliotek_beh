@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+bibliotek = get_bibliotek()
 
 conn = sqlite3.connect("bibliotek.db", check_same_thread=False)
 cursor = conn.cursor()
@@ -50,7 +51,7 @@ def get_bibliotek():
 def sorted_books(bibliotek):
     return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
 
-bibliotek = get_bibliotek()
+
 
 
 # --- SÖK ---
@@ -260,9 +261,11 @@ if password == ADMIN_PASSWORD:
             if st.button("Ja, ta bort", key="confirm_delete_btn"):
                 cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
                 conn.commit()
-                st.sidebar.success(f"{titel} borttagen")
-    
-                del st.session_state["confirm_delete"]
+                
+                # 🔥 tvinga om-laddning av data
+                bibliotek = get_bibliotek()
+                
+                st.session_state["success_message"] = f"{titel} borttagen"
                 st.rerun()
 
         with col2:
@@ -276,8 +279,7 @@ if password == ADMIN_PASSWORD:
 
     edit_choice = st.sidebar.selectbox(
         "Välj bok att editera",
-        [f"{bid} - {data['titel']}" for bid, data in sorted_books(bibliotek)],
-        key="edit_select",
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books(get_bibliotek())],
     )
 
     if edit_choice:
