@@ -122,13 +122,7 @@ for book_id, data in sorted_books():
                     message_placeholder.success(
                         f"✅ {namn.title()} lånade {data['titel']}"
                     )
-                    import time
-
-                    message_placeholder.success(
-                        f"✅ {namn.title()} lånade {data['titel']}"
-                    )
                     
-                    time.sleep(1.5)
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
