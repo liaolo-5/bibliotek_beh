@@ -47,6 +47,8 @@ def get_bibliotek():
 
     return bibliotek
 
+bibliotek = get_bibliotek()
+
 
 def sorted_books(bibliotek):
     return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
