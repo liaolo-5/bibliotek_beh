@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import sqlite3
 
 conn = sqlite3.connect("bibliotek.db", check_same_thread=False)
@@ -49,12 +48,7 @@ bibliotek = get_books()
 
 
 def sorted_books():
-    return sorted(bibliotek.items(), key=lambda x: x[1]["titel"].lower())
-
-
-def save_data():
-    with open("bibliotek.json", "w", encoding="utf-8") as f:
-        json.dump(bibliotek, f, ensure_ascii=False, indent=4)
+    return bibliotek.items()
 
 
 # --- SÖK ---
@@ -150,6 +144,7 @@ if val_bok:
         ))
         
         conn.commit()
+        st.rerun()
 
 st.sidebar.header("🔐 Admin")
 
@@ -165,7 +160,10 @@ if password == ADMIN_PASSWORD:
     antal = st.sidebar.number_input("Antal", min_value=1, step=1)
 
     if st.sidebar.button("Lägg till bok"):
-        book_id = f"B{len(bibliotek) + 1}"
+        cursor.execute("SELECT COUNT(*) FROM books")
+        count = cursor.fetchone()[0]
+        
+        book_id = f"B{count + 1}"
 
         cursor.execute("""
         INSERT INTO books
@@ -182,6 +180,7 @@ if password == ADMIN_PASSWORD:
         conn.commit()
 
         st.sidebar.success(f"Bok tillagd: {titel}")
+        st.rerun()
 
     st.sidebar.subheader("❌ Ta bort bok")
 
@@ -273,3 +272,4 @@ if password == ADMIN_PASSWORD:
             conn.commit()
 
             st.sidebar.success("Boken uppdaterad!")
+            st.rerun()
