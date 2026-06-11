@@ -79,9 +79,14 @@ for book_id, data in sorted_books(bibliotek):
         with col2:
             input_key = f"name_{book_id}"
         
-            # säkerställ state
+            # init state
             if input_key not in st.session_state:
                 st.session_state[input_key] = ""
+        
+            # RESET-logik (viktigt)
+            if st.session_state.get(f"reset_{book_id}", False):
+                st.session_state[input_key] = ""
+                st.session_state[f"reset_{book_id}"] = False
         
             namn = st.text_input("Namn", key=input_key)
         
@@ -116,13 +121,12 @@ for book_id, data in sorted_books(bibliotek):
         
                     conn.commit()
         
-                    # 💡 FIX: använd placeholder key istället för input key
                     st.session_state[f"msg_{book_id}"] = (
                         f"✅ {namn_clean.title()} lånade {data['titel']}"
                     )
         
-                    # 🔥 RÄTT sätt att "tömma" input i Streamlit
-                    st.session_state[input_key] = ""
+                    # 🔥 istället för att skriva direkt till input
+                    st.session_state[f"reset_{book_id}"] = True
         
                     st.rerun()
 
