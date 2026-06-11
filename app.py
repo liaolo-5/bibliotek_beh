@@ -79,37 +79,56 @@ for book_id, data in sorted_books():
 
         with col2:
             input_key = f"name_{book_id}"
+        
+            if input_key not in st.session_state:
+                st.session_state[input_key] = ""
+        
             namn = st.text_input("Namn", key=input_key)
-
+        
+            message_placeholder = st.empty()
+        
             if st.button("Låna", key=f"loan_{book_id}"):
-
+        
                 if namn.strip() == "":
-                    st.warning("⚠️ Skriv namn först")
-
+                    message_placeholder.warning("⚠️ Skriv namn först")
+        
                 elif data["tillgängliga"] <= 0:
-                    st.error("❌ Boken är slut")
-            
+                    message_placeholder.error("❌ Boken är slut")
+        
                 else:
                     data["tillgängliga"] -= 1
                     data["låntagare"].append(namn.strip().title())
-
-                    cursor.execute("""
-                    UPDATE books
-                    SET tillgangliga = ?,
-                        lantagare = ?
-                    WHERE id = ?
-                    """, (
-                        data["tillgängliga"],
-                        ",".join(data["låntagare"]),
-                        book_id
-                    ))
-                    
+        
+                    cursor.execute(
+                        """
+                        UPDATE books
+                        SET tillgangliga = ?,
+                            lantagare = ?
+                        WHERE id = ?
+                        """,
+                        (
+                            data["tillgängliga"],
+                            ",".join(data["låntagare"]),
+                            book_id,
+                        ),
+                    )
+        
                     conn.commit()
-                    
-                    st.session_state["success_message"] = (
-                        f"✅ {namn.strip().title()} lånade {data['titel']}"
+        
+                    # töm rutan
+                    st.session_state[input_key] = ""
+        
+                    # visa meddelande vid knappen
+                    message_placeholder.success(
+                        f"✅ {namn.title()} lånade {data['titel']}"
+                    )
+                    import time
+
+                    message_placeholder.success(
+                        f"✅ {namn.title()} lånade {data['titel']}"
                     )
                     
+                    time.sleep(1.5)
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
