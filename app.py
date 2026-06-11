@@ -20,6 +20,9 @@ conn.commit()
 ADMIN_PASSWORD = "211"
 
 st.title("📚 BEH Bibliotek")
+if "success_message" in st.session_state:
+    st.success(st.session_state["success_message"])
+    del st.session_state["success_message"]
 
 
 def get_books():
@@ -102,11 +105,11 @@ for book_id, data in sorted_books():
                     ))
                     
                     conn.commit()
-            
-                    st.success(f"✅ {namn} lånade {data['titel']}")
-            
-                    del st.session_state[input_key]
-            
+                    
+                    st.session_state["success_message"] = (
+                        f"✅ {namn.strip().title()} lånade {data['titel']}"
+                    )
+                    
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
