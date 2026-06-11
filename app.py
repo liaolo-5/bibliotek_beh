@@ -78,7 +78,11 @@ for book_id, data in sorted_books(bibliotek):
 
         with col2:
             input_key = f"name_{book_id}"
-            namn = st.text_input("Namn", key=input_key)
+        
+            # säkerställ att state alltid finns
+            st.session_state.setdefault(input_key, "")
+        
+            st.text_input("Namn", key=input_key)
         
             if f"msg_{book_id}" in st.session_state:
                 st.success(st.session_state[f"msg_{book_id}"])
@@ -86,7 +90,7 @@ for book_id, data in sorted_books(bibliotek):
         
             if st.button("Låna", key=f"loan_{book_id}"):
         
-                namn_clean = namn.strip()
+                namn_clean = st.session_state.get(input_key, "").strip()
         
                 if namn_clean == "":
                     st.warning("⚠️ Skriv namn först")
@@ -111,8 +115,11 @@ for book_id, data in sorted_books(bibliotek):
         
                     conn.commit()
         
-                    st.session_state[f"msg_{book_id}"] = f"✅ {namn_clean.title()} lånade {data['titel']}"
+                    st.session_state[f"msg_{book_id}"] = (
+                        f"✅ {namn_clean.title()} lånade {data['titel']}"
+                    )
         
+                    st.session_state[input_key] = ""
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
