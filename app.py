@@ -131,6 +131,9 @@ for book_id, data in sorted_books(bibliotek):
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
+if "return_msg" in st.session_state:
+    st.sidebar.success(st.session_state["return_msg"])
+    del st.session_state["return_msg"]
 
 # lista bara böcker som har låntagare
 valbara_bocker = [
@@ -140,6 +143,7 @@ valbara_bocker = [
 ]
 
 val_bok = st.sidebar.selectbox("Välj bok", valbara_bocker)
+
 
 if val_bok:
     book_id = val_bok.split(" - ")[0]
@@ -168,9 +172,7 @@ if val_bok:
 
         conn.commit()
 
-        # ⭐ VISAS DIREKT I SIDEBAR
-        st.sidebar.success(f"🔁 {namn} returnerade '{data['titel']}'")
-
+        st.session_state["return_msg"] = f"🔁 {namn} returnerade '{data['titel']}'"
         st.rerun()
 
 st.sidebar.header("🔐 Admin")
