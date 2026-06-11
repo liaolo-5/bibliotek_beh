@@ -165,6 +165,7 @@ if val_bok:
         ))
         
         conn.commit()
+        st.session_state["success_message"] = f"🔁 {namn} returnerade '{data['titel']}'"
         st.rerun()
 
 st.sidebar.header("🔐 Admin")
