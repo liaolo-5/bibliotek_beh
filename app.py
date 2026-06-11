@@ -159,47 +159,47 @@ if password == ADMIN_PASSWORD:
     författare = st.sidebar.text_input("Författare").title().strip()
     antal = st.sidebar.number_input("Antal", min_value=1, step=1)
 
-        if st.sidebar.button("Lägg till bok"):
-        
-            if not titel:
-                st.sidebar.error("Titel saknas")
-        
-            elif not författare:
-                st.sidebar.error("Författare saknas")
-        
+    if st.sidebar.button("Lägg till bok"):
+    
+        if not titel:
+            st.sidebar.error("Titel saknas")
+    
+        elif not författare:
+            st.sidebar.error("Författare saknas")
+    
+        else:
+            cursor.execute("""
+            SELECT id
+            FROM books
+            ORDER BY CAST(SUBSTR(id, 2) AS INTEGER) DESC
+            LIMIT 1
+            """)
+    
+            last = cursor.fetchone()
+    
+            if last:
+                next_id = int(last[0][1:]) + 1
             else:
-                cursor.execute("""
-                SELECT id
-                FROM books
-                ORDER BY CAST(SUBSTR(id, 2) AS INTEGER) DESC
-                LIMIT 1
-                """)
-        
-                last = cursor.fetchone()
-        
-                if last:
-                    next_id = int(last[0][1:]) + 1
-                else:
-                    next_id = 1
-        
-                book_id = f"B{next_id}"
-        
-                cursor.execute("""
-                INSERT INTO books
-                VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    book_id,
-                    titel,
-                    författare,
-                    int(antal),
-                    int(antal),
-                    ""
-                ))
-        
-                conn.commit()
-        
-                st.sidebar.success(f"Bok tillagd: {titel}")
-                st.rerun()
+                next_id = 1
+    
+            book_id = f"B{next_id}"
+    
+            cursor.execute("""
+            INSERT INTO books
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                book_id,
+                titel,
+                författare,
+                int(antal),
+                int(antal),
+                ""
+            ))
+    
+            conn.commit()
+    
+            st.sidebar.success(f"Bok tillagd: {titel}")
+            st.rerun()
 
     st.sidebar.subheader("❌ Ta bort bok")
 
