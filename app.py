@@ -80,8 +80,8 @@ for book_id, data in sorted_books():
         with col2:
             input_key = f"name_{book_id}"
         
-            if input_key not in st.session_state:
-                st.session_state[input_key] = ""
+            if input_key in st.session_state:
+                del st.session_state[input_key]
         
             namn = st.text_input("Namn", key=input_key)
         
