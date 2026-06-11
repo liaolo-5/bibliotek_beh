@@ -47,7 +47,7 @@ def get_bibliotek():
     return bibliotek
 
 
-def sorted_books():
+def sorted_books(bibliotek):
     return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
 
 bibliotek = get_bibliotek()
@@ -59,7 +59,7 @@ sok = st.text_input("🔍 Sök bok (titel eller författare)").lower().strip()
 result = []
 st.subheader("📖 Böcker i biblioteket")
 
-for book_id, data in sorted_books():
+for book_id, data in sorted_books(bibliotek):
     titel = str(data.get("titel", "")).lower()
     forfattare = str(data.get("författare", "")).lower()
 
@@ -78,14 +78,17 @@ for book_id, data in sorted_books():
 
         with col2:
             input_key = f"name_{book_id}"
-        
-            if input_key not in st.session_state:
-                st.session_state[input_key] = ""
             namn = st.text_input("Namn", key=input_key)
+        
+            if f"msg_{book_id}" in st.session_state:
+                st.success(st.session_state[f"msg_{book_id}"])
+                del st.session_state[f"msg_{book_id}"]
         
             if st.button("Låna", key=f"loan_{book_id}"):
         
-                if not namn.strip():
+                namn_clean = namn.strip()
+        
+                if namn_clean == "":
                     st.warning("⚠️ Skriv namn först")
         
                 elif data["tillgängliga"] <= 0:
@@ -93,26 +96,23 @@ for book_id, data in sorted_books():
         
                 else:
                     data["tillgängliga"] -= 1
-                    data["låntagare"].append(namn.strip().title())
+                    data["låntagare"].append(namn_clean.title())
         
-                    cursor.execute(
-                        """
-                        UPDATE books
-                        SET tillgangliga = ?,
-                            lantagare = ?
-                        WHERE id = ?
-                        """,
-                        (
-                            data["tillgängliga"],
-                            ",".join(data["låntagare"]),
-                            book_id,
-                        ),
-                    )
+                    cursor.execute("""
+                    UPDATE books
+                    SET tillgangliga = ?,
+                        lantagare = ?
+                    WHERE id = ?
+                    """, (
+                        data["tillgängliga"],
+                        ",".join(data["låntagare"]),
+                        book_id,
+                    ))
         
                     conn.commit()
         
-                    st.success(f"✅ {namn.title()} lånade {data['titel']}")
-                    st.session_state[input_key] = ""
+                    st.session_state[f"msg_{book_id}"] = f"✅ {namn_clean.title()} lånade {data['titel']}"
+        
                     st.rerun()
 
 st.sidebar.header("🔁 Returnera bok")
@@ -120,7 +120,7 @@ st.sidebar.header("🔁 Returnera bok")
 # lista bara böcker som har låntagare
 valbara_bocker = [
     f"{bid} - {data['titel']}"
-    for bid, data in sorted_books()
+    for bid, data in sorted_books(bibliotek)
     if len(data["låntagare"]) > 0
 ]
 
@@ -136,7 +136,7 @@ if val_bok:
         data["låntagare"].remove(namn)
         data["tillgängliga"] += 1
 
-        st.sidebar.success(f"{namn} returnerade {data['titel']}")
+        st.session_state[f"msg_return_{book_id}"] = f"{namn} returnerade {data['titel']}"
 
         cursor.execute("""
         UPDATE books
@@ -212,7 +212,7 @@ if password == ADMIN_PASSWORD:
         # --- steg 1: välj bok ---
     remove_choice = st.sidebar.selectbox(
         "Välj bok att ta bort",
-        [f"{bid} - {data['titel']}" for bid, data in sorted_books()],
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books(bibliotek)],
         key="remove_select"
     )
     
@@ -253,7 +253,7 @@ if password == ADMIN_PASSWORD:
 
     edit_choice = st.sidebar.selectbox(
         "Välj bok att editera",
-        [f"{bid} - {data['titel']}" for bid, data in sorted_books()],
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books(bibliotek)],
         key="edit_select",
     )
 
