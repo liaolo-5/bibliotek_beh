@@ -145,13 +145,15 @@ if val_bok:
     book_id = val_bok.split(" - ")[0]
     data = bibliotek[book_id]
 
-    namn = st.sidebar.selectbox("Vem ska returnera?", data["låntagare"], key="return_name")
+    namn = st.sidebar.selectbox(
+        "Vem ska returnera?",
+        data["låntagare"],
+        key="return_name"
+    )
 
     if st.sidebar.button("Returnera", key="return_btn"):
         data["låntagare"].remove(namn)
         data["tillgängliga"] += 1
-
-        st.session_state[f"msg_return_{book_id}"] = f"{namn} returnerade {data['titel']}"
 
         cursor.execute("""
         UPDATE books
@@ -163,9 +165,12 @@ if val_bok:
             ",".join(data["låntagare"]),
             book_id
         ))
-        
+
         conn.commit()
-        st.session_state["success_message"] = f"🔁 {namn} returnerade '{data['titel']}'"
+
+        # ⭐ VISAS DIREKT I SIDEBAR
+        st.sidebar.success(f"🔁 {namn} returnerade '{data['titel']}'")
+
         st.rerun()
 
 st.sidebar.header("🔐 Admin")
