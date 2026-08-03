@@ -162,9 +162,22 @@ if password == ADMIN_PASSWORD:
 
     st.sidebar.subheader("➕ Lägg till bok")
 
-    titel = st.sidebar.text_input("Titel").title().strip()
-    författare = st.sidebar.text_input("Författare").title().strip()
-    antal = st.sidebar.number_input("Antal", min_value=1, step=1)
+    titel = st.sidebar.text_input(
+        "Titel",
+        key="add_title"
+    ).title().strip()
+    
+    författare = st.sidebar.text_input(
+        "Författare",
+        key="add_author"
+    ).title().strip()
+    
+    antal = st.sidebar.number_input(
+        "Antal",
+        min_value=1,
+        step=1,
+        key="add_amount"
+    )
 
     if st.sidebar.button("Lägg till bok"):
     
@@ -201,6 +214,11 @@ if password == ADMIN_PASSWORD:
             }).execute()
     
             st.sidebar.success(f"Bok tillagd: {titel}")
+
+            st.session_state["add_title"] = ""
+            st.session_state["add_author"] = ""
+            st.session_state["add_amount"] = 1
+            
             st.rerun()
 
     st.sidebar.subheader("❌ Ta bort bok")
