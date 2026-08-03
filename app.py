@@ -249,7 +249,8 @@ if password == ADMIN_PASSWORD:
     
     if new_file:
     
-        df = pd.read_csv(new_file)
+        df = pd.read_csv(new_file, sep=";")
+        df.columns = df.columns.str.lower().str.strip()
     
         required_columns = [
             "titel",
