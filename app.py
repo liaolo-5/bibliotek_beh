@@ -219,7 +219,7 @@ if password == ADMIN_PASSWORD:
             for _, row in df.iterrows():
 
                 try:
-                    supabase.table("books").insert({
+                    supabase.table("books").upsert({
                         "id": str(row["id"]),
                         "titel": str(row["titel"]),
                         "forfattare": str(row["forfattare"]),
