@@ -208,19 +208,14 @@ if password == ADMIN_PASSWORD:
     
             book_id = f"B{next_id}"
     
-            cursor.execute("""
-            INSERT INTO books
-            VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                book_id,
-                titel,
-                författare,
-                int(antal),
-                int(antal),
-                ""
-            ))
-    
-            conn.commit()
+            supabase.table("books").insert({
+                "id": book_id,
+                "titel": titel,
+                "forfattare": författare,
+                "antal": int(antal),
+                "tillgangliga": int(antal),
+                "lantagare": ""
+            }).execute()
     
             st.sidebar.success(f"Bok tillagd: {titel}")
             st.rerun()
