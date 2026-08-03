@@ -294,6 +294,7 @@ if password == ADMIN_PASSWORD:
                     )
                     for bok in response.data
                 }
+                st.sidebar.write(befintliga_bocker)
     
                 for index, row in df.iterrows():
     
