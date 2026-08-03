@@ -282,6 +282,18 @@ if password == ADMIN_PASSWORD:
             if st.sidebar.button("Importera nya böcker"):
     
                 fel = []
+
+                response = supabase.table("books") \
+                    .select("titel, forfattare, id") \
+                    .execute()
+                
+                befintliga_bocker = {
+                    (
+                        bok["titel"].strip().lower(),
+                        bok["forfattare"].strip().lower()
+                    )
+                    for bok in response.data
+                }
     
                 for index, row in df.iterrows():
     
@@ -326,10 +338,6 @@ if password == ADMIN_PASSWORD:
     
     
                 else:
-
-                    response = supabase.table("books") \
-                        .select("titel, forfattare, id") \
-                        .execute()
                 
                     befintliga_bocker = {
                         (
