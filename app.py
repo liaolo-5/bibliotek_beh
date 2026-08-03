@@ -86,7 +86,8 @@ for book_id, data in sorted_books(bibliotek):
             if f"msg_{book_id}" in st.session_state:
                 st.success(st.session_state[f"msg_{book_id}"])
                 del st.session_state[f"msg_{book_id}"]
-        
+                
+        #LÅNA BOK
             if st.button("Låna", key=f"loan_{book_id}"):
         
                 namn_clean = st.session_state.get(input_key, "").strip()
@@ -101,18 +102,10 @@ for book_id, data in sorted_books(bibliotek):
                     data["tillgängliga"] -= 1
                     data["låntagare"].append(namn_clean.title())
         
-                    cursor.execute("""
-                    UPDATE books
-                    SET tillgangliga = ?,
-                        lantagare = ?
-                    WHERE id = ?
-                    """, (
-                        data["tillgängliga"],
-                        ",".join(data["låntagare"]),
-                        book_id,
-                    ))
-        
-                    conn.commit()
+                    supabase.table("books").update({
+                        "tillgangliga": data["tillgängliga"],
+                        "lantagare": ",".join(data["låntagare"])
+                    }).eq("id", book_id).execute()
         
                     st.session_state[f"msg_{book_id}"] = (
                         f"✅ {namn_clean.title()} lånade {data['titel']}"
