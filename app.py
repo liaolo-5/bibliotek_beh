@@ -238,6 +238,71 @@ if password == ADMIN_PASSWORD:
             )
     
             st.rerun()
+
+    st.sidebar.subheader("📚 Importera nya böcker")
+
+    new_file = st.sidebar.file_uploader(
+        "Välj CSV med nya böcker",
+        type=["csv"],
+        key="new_books_import"
+    )
+    
+    if new_file:
+    
+        df = pd.read_csv(new_file)
+    
+        required_columns = [
+            "titel",
+            "forfattare",
+            "kategori",
+            "antal"
+        ]
+    
+        if not all(col in df.columns for col in required_columns):
+            st.sidebar.error(
+                "CSV-filen måste innehålla kolumnerna: titel, forfattare, kategori, antal"
+            )
+    
+        else:
+            st.sidebar.write(
+                f"{len(df)} böcker hittades"
+            )
+    
+            if st.sidebar.button("Importera nya böcker"):
+    
+                # hitta senaste bok-ID
+                response = supabase.table("books") \
+                    .select("id") \
+                    .execute()
+    
+                ids = [
+                    int(row["id"][1:])
+                    for row in response.data
+                    if row["id"].startswith("B")
+                ]
+    
+                next_id = max(ids, default=0) + 1
+    
+                for _, row in df.iterrows():
+    
+                    supabase.table("books").insert({
+                        "id": f"B{next_id}",
+                        "titel": str(row["titel"]),
+                        "forfattare": str(row["forfattare"]),
+                        "kategori": str(row["kategori"]),
+                        "antal": int(row["antal"]),
+                        "tillgangliga": int(row["antal"]),
+                        "lantagare": ""
+                    }).execute()
+    
+                    next_id += 1
+    
+                st.sidebar.success(
+                    f"{len(df)} böcker importerade!"
+                )
+    
+                st.rerun()
+            
     st.sidebar.subheader("➕ Lägg till bok")
 
     if st.session_state.get("clear_add_fields", False):
