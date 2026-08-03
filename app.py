@@ -239,70 +239,72 @@ if password == ADMIN_PASSWORD:
     
             st.rerun()
 
-    st.sidebar.subheader("📚 Importera nya böcker")
+    if st.sidebar.button("Importera nya böcker"):
 
-    new_file = st.sidebar.file_uploader(
-        "Välj CSV med nya böcker",
-        type=["csv"],
-        key="new_books_import"
-    )
+        fel = []
     
-    if new_file:
+        for index, row in df.iterrows():
     
-        df = pd.read_csv(new_file, sep=";")
-        df.columns = df.columns.str.lower().str.strip()
+            rad = index + 2  # +2 eftersom rad 1 är rubriker
     
-        required_columns = [
-            "titel",
-            "forfattare",
-            "kategori",
-            "antal"
-        ]
+            if pd.isna(row["titel"]) or str(row["titel"]).strip() == "":
+                fel.append(f"Rad {rad}: titel saknas")
     
-        if not all(col in df.columns for col in required_columns):
-            st.sidebar.error(
-                "CSV-filen måste innehålla kolumnerna: titel, forfattare, kategori, antal"
-            )
+            if pd.isna(row["forfattare"]) or str(row["forfattare"]).strip() == "":
+                fel.append(f"Rad {rad}: författare saknas")
+    
+            if pd.isna(row["kategori"]) or str(row["kategori"]).strip() == "":
+                fel.append(f"Rad {rad}: kategori saknas")
+    
+            try:
+                antal = int(row["antal"])
+                if antal < 1:
+                    fel.append(f"Rad {rad}: antal måste vara minst 1")
+            except:
+                fel.append(f"Rad {rad}: antal måste vara ett heltal")
+    
+    
+        if fel:
+            st.sidebar.error("Import avbruten:")
+            
+            for f in fel:
+                st.sidebar.write("⚠️ " + f)
     
         else:
-            st.sidebar.write(
-                f"{len(df)} böcker hittades"
+            # hitta senaste bok-ID
+            response = supabase.table("books") \
+                .select("id") \
+                .execute()
+    
+            ids = [
+                int(row["id"][1:])
+                for row in response.data
+                if row["id"].startswith("B")
+            ]
+    
+            next_id = max(ids, default=0) + 1
+    
+    
+            for _, row in df.iterrows():
+    
+                supabase.table("books").insert({
+                    "id": f"B{next_id}",
+                    "titel": str(row["titel"]).strip(),
+                    "forfattare": str(row["forfattare"]).strip(),
+                    "kategori": str(row["kategori"]).strip(),
+                    "antal": int(row["antal"]),
+                    "tillgangliga": int(row["antal"]),
+                    "lantagare": ""
+                }).execute()
+    
+                next_id += 1
+    
+    
+            st.sidebar.success(
+                f"{len(df)} böcker importerade!"
             )
     
-            if st.sidebar.button("Importera nya böcker"):
-    
-                # hitta senaste bok-ID
-                response = supabase.table("books") \
-                    .select("id") \
-                    .execute()
-    
-                ids = [
-                    int(row["id"][1:])
-                    for row in response.data
-                    if row["id"].startswith("B")
-                ]
-    
-                next_id = max(ids, default=0) + 1
-    
-                for _, row in df.iterrows():
-    
-                    supabase.table("books").insert({
-                        "id": f"B{next_id}",
-                        "titel": str(row["titel"]),
-                        "forfattare": str(row["forfattare"]),
-                        "kategori": str(row["kategori"]),
-                        "antal": int(row["antal"]),
-                        "tillgangliga": int(row["antal"]),
-                        "lantagare": ""
-                    }).execute()
-    
-                    next_id += 1
-    
-                st.sidebar.success(
-                    f"{len(df)} böcker importerade!"
-                )
-    
-                st.rerun()
+            st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
 
