@@ -323,4 +323,3 @@ if password == ADMIN_PASSWORD:
             st.sidebar.success("Boken uppdaterad!")
             st.rerun()
 
-conn.close()
