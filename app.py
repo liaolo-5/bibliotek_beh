@@ -192,17 +192,17 @@ if password == ADMIN_PASSWORD:
             st.sidebar.error("Författare saknas")
     
         else:
-            cursor.execute("""
-            SELECT id
-            FROM books
-            ORDER BY CAST(SUBSTR(id, 2) AS INTEGER) DESC
-            LIMIT 1
-            """)
-    
-            last = cursor.fetchone()
-    
-            if last:
-                next_id = int(last[0][1:]) + 1
+            response = supabase.table("books") \
+                .select("id") \
+                .execute()
+            
+            ids = [row["id"] for row in response.data]
+            
+            if ids:
+                last_number = max(
+                    int(book_id[1:]) for book_id in ids
+                )
+                next_id = last_number + 1
             else:
                 next_id = 1
     
