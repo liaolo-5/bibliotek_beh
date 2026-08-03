@@ -307,6 +307,14 @@ if password == ADMIN_PASSWORD:
                             fel.append(f"Rad {rad}: antal måste vara minst 1")
                     except:
                         fel.append(f"Rad {rad}: antal måste vara ett heltal")
+
+                titel = str(row["titel"]).strip().lower()
+                forfattare = str(row["forfattare"]).strip().lower()
+                
+                if (titel, forfattare) in befintliga_bocker:
+                    fel.append(
+                        f"Rad {rad}: {row['titel']} av {row['forfattare']} finns redan"
+                    )
     
     
                 if fel:
@@ -320,8 +328,16 @@ if password == ADMIN_PASSWORD:
                 else:
     
                     response = supabase.table("books") \
-                        .select("id") \
-                        .execute()
+                    .select("titel, forfattare") \
+                    .execute()
+                
+                befintliga_bocker = {
+                    (
+                        bok["titel"].strip().lower(),
+                        bok["forfattare"].strip().lower()
+                    )
+                    for bok in response.data
+                }
     
                     ids = [
                         int(row["id"][1:])
