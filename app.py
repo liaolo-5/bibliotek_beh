@@ -259,6 +259,13 @@ if password == ADMIN_PASSWORD:
             "kategori",
             "antal"
         ]
+        tillatna_kategorier = {
+            "medicin": "Medicin",
+            "pedagogik": "Pedagogik",
+            "psykologi": "Psykologi",
+            "socialt arbete": "Socialt arbete",
+            "övrigt": "Övrigt"
+        }
     
         if not all(col in df.columns for col in required_columns):
     
@@ -288,6 +295,11 @@ if password == ADMIN_PASSWORD:
     
                     if pd.isna(row["kategori"]) or str(row["kategori"]).strip() == "":
                         fel.append(f"Rad {rad}: kategori saknas")
+                    
+                    elif str(row["kategori"]).strip().lower() not in tillatna_kategorier:
+                        fel.append(
+                            f"Rad {rad}: okänd kategori '{row['kategori']}'"
+                        )
     
                     try:
                         antal = int(row["antal"])
@@ -326,7 +338,7 @@ if password == ADMIN_PASSWORD:
                             "id": f"B{next_id}",
                             "titel": str(row["titel"]).strip(),
                             "forfattare": str(row["forfattare"]).strip(),
-                            "kategori": str(row["kategori"]).strip(),
+                            ""kategori": tillatna_kategorier[str(row["kategori"]).strip().lower()],
                             "antal": int(row["antal"]),
                             "tillgangliga": int(row["antal"]),
                             "lantagare": ""
