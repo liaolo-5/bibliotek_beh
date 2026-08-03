@@ -1,0 +1,576 @@
+import streamlit as st
+from supabase import create_client
+import pandas as pd
+from io import BytesIO
+
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
+)
+
+kategorier = [
+    "Medicin",
+    "Pedagogik",
+    "Psykologi",
+    "Socialt arbete",
+    "Övrigt"
+]
+
+ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
+
+st.title("📚 BEH Bibliotek")
+test = supabase.table("books").select("*").execute()
+
+
+if "success_message" in st.session_state:
+    st.success(st.session_state["success_message"])
+    del st.session_state["success_message"]
+
+
+def get_bibliotek():
+
+    response = supabase.table("books") \
+        .select("*") \
+        .order("titel") \
+        .execute()
+
+    bibliotek = {}
+
+    for row in response.data:
+        bibliotek[row["id"]] = {
+            "titel": row["titel"],
+            "författare": row["forfattare"],
+            "kategori": row.get("kategori", "Övrigt"),
+            "antal": row["antal"],
+            "tillgängliga": row["tillgangliga"],
+            "låntagare": row["lantagare"].split(",") if row["lantagare"] else []
+        }
+
+    return bibliotek
+
+bibliotek = get_bibliotek()
+
+
+def sorted_books(bibliotek):
+    return sorted(bibliotek.items(), key=lambda x: x[1]["titel"])
+
+
+
+
+# --- SÖK ---
+sok = st.text_input("🔍 Sök bok (titel eller författare)").lower().strip()
+valda_kategorier = ["Alla"] + kategorier
+
+vald_kategori = st.selectbox(
+    "🏷️ Filtrera på kategori",
+    valda_kategorier
+)
+
+result = []
+st.subheader("📖 Böcker i biblioteket")
+
+for book_id, data in sorted_books(bibliotek):
+    if vald_kategori != "Alla" and data["kategori"] != vald_kategori:
+        continue
+    titel = str(data.get("titel", "")).lower()
+    forfattare = str(data.get("författare", "")).lower()
+
+    if sok and (sok not in titel and sok not in forfattare):
+        continue
+
+    with st.container():
+        st.markdown("---")
+
+        col1, col2 = st.columns([3, 1])
+
+        with col1:
+            st.subheader(f"📘 {data['titel']}")
+            st.write(f"✍️ {data['författare']}")
+            st.write(f"🏷️ {data['kategori']}")
+            st.write(f"📦 Tillgängliga: {data['tillgängliga']}")
+
+        with col2:
+            input_key = f"name_{book_id}"
+        
+            # init state
+            if input_key not in st.session_state:
+                st.session_state[input_key] = ""
+        
+            # RESET-logik (viktigt)
+            if st.session_state.get(f"reset_{book_id}", False):
+                st.session_state[input_key] = ""
+                st.session_state[f"reset_{book_id}"] = False
+        
+            namn = st.text_input("Namn", key=input_key)
+        
+            if f"msg_{book_id}" in st.session_state:
+                st.success(st.session_state[f"msg_{book_id}"])
+                del st.session_state[f"msg_{book_id}"]
+                
+        #LÅNA BOK
+            if st.button("Låna", key=f"loan_{book_id}"):
+        
+                namn_clean = st.session_state.get(input_key, "").strip()
+        
+                if namn_clean == "":
+                    st.warning("⚠️ Skriv namn först")
+        
+                elif data["tillgängliga"] <= 0:
+                    st.error("❌ Boken är slut")
+        
+                else:
+                    data["tillgängliga"] -= 1
+                    data["låntagare"].append(namn_clean.title())
+        
+                    supabase.table("books").update({
+                        "tillgangliga": data["tillgängliga"],
+                        "lantagare": ",".join(data["låntagare"])
+                    }).eq("id", book_id).execute()
+        
+                    st.session_state[f"msg_{book_id}"] = (
+                        f"✅ {namn_clean.title()} lånade {data['titel']}"
+                    )
+        
+                    # 🔥 istället för att skriva direkt till input
+                    st.session_state[f"reset_{book_id}"] = True
+        
+                    st.rerun()
+
+st.sidebar.header("🔁 Returnera bok")
+if "return_msg" in st.session_state:
+    st.sidebar.success(st.session_state["return_msg"])
+    del st.session_state["return_msg"]
+
+# lista bara böcker som har låntagare
+valbara_bocker = [
+    f"{bid} - {data['titel']}"
+    for bid, data in sorted_books(bibliotek)
+    if len(data["låntagare"]) > 0
+]
+
+val_bok = st.sidebar.selectbox("Välj bok", valbara_bocker)
+
+
+if val_bok:
+    book_id = val_bok.split(" - ")[0]
+    data = get_bibliotek()[book_id]
+
+    namn = st.sidebar.selectbox(
+        "Vem ska returnera?",
+        data["låntagare"],
+        key="return_name"
+    )
+
+    if st.sidebar.button("Returnera", key="return_btn"):
+        data["låntagare"].remove(namn)
+        data["tillgängliga"] += 1
+
+        supabase.table("books").update({
+            "tillgangliga": data["tillgängliga"],
+            "lantagare": ",".join(data["låntagare"])
+        }).eq("id", book_id).execute()
+
+        st.session_state["return_msg"] = f"🔁 {namn} returnerade '{data['titel']}'"
+        st.rerun()
+
+st.sidebar.header("🔐 Admin")
+
+password = st.sidebar.text_input("Lösenord", type="password")
+
+if password == ADMIN_PASSWORD:
+    st.sidebar.success("Åtkomst beviljad")
+
+    st.sidebar.subheader("💾 Backup")
+
+    if st.sidebar.button("Exportera bibliotek"):
+    
+        response = supabase.table("books") \
+            .select("*") \
+            .execute()
+    
+        df = pd.DataFrame(response.data)
+    
+        csv = df.to_csv(
+            index=False,
+            encoding="utf-8-sig"
+        )
+    
+        st.sidebar.download_button(
+            label="📥 Ladda ner backup",
+            data=csv,
+            file_name="bibliotek_backup.csv",
+            mime="text/csv"
+        )
+    st.sidebar.subheader("📤 Återställ från backup")
+
+    uploaded_file = st.sidebar.file_uploader(
+        "Välj CSV-fil",
+        type=["csv"]
+    )
+    
+    if uploaded_file:
+    
+        df = pd.read_csv(uploaded_file)
+    
+        st.sidebar.write(f"Antal böcker hittade: {len(df)}")
+    
+        if st.sidebar.button("Importera böcker"):
+    
+            for _, row in df.iterrows():
+
+                try:
+                    supabase.table("books").upsert({
+                        "id": str(row["id"]),
+                        "titel": str(row["titel"]),
+                        "forfattare": str(row["forfattare"]),
+                        "kategori": str(row["kategori"]),
+                        "antal": int(row["antal"]),
+                        "tillgangliga": int(row["tillgangliga"]),
+                        "lantagare": "" if pd.isna(row["lantagare"]) else str(row["lantagare"])
+                    }).execute()
+                
+                except Exception as e:
+                    st.sidebar.error(f"Fel vid import av {row['titel']}: {e}")
+                    st.stop()
+    
+            st.sidebar.success(
+                f"{len(df)} böcker importerade!"
+            )
+    
+            st.rerun()
+
+    st.sidebar.subheader("📚 Importera nya böcker")
+
+    new_file = st.sidebar.file_uploader(
+        "Välj CSV med nya böcker",
+        type=["csv"],
+        key="new_books_import"
+    )
+    
+    if new_file:
+    
+        # Läs svensk CSV
+        df = pd.read_csv(new_file, sep=";")
+        df.columns = df.columns.str.lower().str.strip()
+    
+        required_columns = [
+            "titel",
+            "forfattare",
+            "kategori",
+            "antal"
+        ]
+    
+        if not all(col in df.columns for col in required_columns):
+    
+            st.sidebar.error(
+                "CSV-filen måste innehålla kolumnerna: titel, forfattare, kategori och antal."
+            )
+    
+        else:
+    
+            tillatna_kategorier = {
+                "medicin": "Medicin",
+                "pedagogik": "Pedagogik",
+                "psykologi": "Psykologi",
+                "socialt arbete": "Socialt arbete",
+                "övrigt": "Övrigt"
+            }
+    
+            # Hämta alla böcker en gång
+            response = supabase.table("books").select(
+                "id, titel, forfattare"
+            ).execute()
+    
+            befintliga_bocker = {
+                (
+                    bok["titel"].strip().lower(),
+                    bok["forfattare"].strip().lower()
+                )
+                for bok in response.data
+            }
+    
+            ids = [
+                int(bok["id"][1:])
+                for bok in response.data
+                if bok["id"].startswith("B")
+            ]
+    
+            next_id = max(ids, default=0) + 1
+    
+            fel = []
+            dubbletter = []
+            nya_bocker = []
+    
+            for index, row in df.iterrows():
+    
+                rad = index + 2
+    
+                titel = str(row["titel"]).strip()
+                forfattare = str(row["forfattare"]).strip()
+                kategori = str(row["kategori"]).strip()
+    
+                # Titel
+                if titel == "" or pd.isna(row["titel"]):
+                    fel.append(f"Rad {rad}: titel saknas")
+                    continue
+    
+                # Författare
+                if forfattare == "" or pd.isna(row["forfattare"]):
+                    fel.append(f"Rad {rad}: författare saknas")
+                    continue
+    
+                # Kategori
+                if kategori == "":
+                    fel.append(f"Rad {rad}: kategori saknas")
+                    continue
+    
+                kategori_key = kategori.lower()
+    
+                if kategori_key not in tillatna_kategorier:
+                    fel.append(
+                        f"Rad {rad}: okänd kategori '{kategori}'"
+                    )
+                    continue
+    
+                # Antal
+                try:
+                    antal = int(row["antal"])
+    
+                    if antal < 1:
+                        fel.append(
+                            f"Rad {rad}: antal måste vara minst 1"
+                        )
+                        continue
+    
+                except:
+                    fel.append(
+                        f"Rad {rad}: antal måste vara ett heltal"
+                    )
+                    continue
+    
+                # Dubblett
+                nyckel = (
+                    titel.lower(),
+                    forfattare.lower()
+                )
+    
+                if nyckel in befintliga_bocker:
+                    dubbletter.append(
+                        f"{titel} – {forfattare}"
+                    )
+                    continue
+    
+                nya_bocker.append({
+                    "id": f"B{next_id}",
+                    "titel": titel,
+                    "forfattare": forfattare,
+                    "kategori": tillatna_kategorier[kategori_key],
+                    "antal": antal,
+                    "tillgangliga": antal,
+                    "lantagare": ""
+                })
+    
+                next_id += 1
+    
+            # Visa fel
+            if fel:
+    
+                st.sidebar.error(
+                    "Importen avbröts eftersom fel hittades:"
+                )
+    
+                for text in fel:
+                    st.sidebar.write("⚠️ " + text)
+    
+            else:
+    
+                # Importera endast nya böcker
+                for bok in nya_bocker:
+                    supabase.table("books").insert(bok).execute()
+    
+                st.sidebar.success(
+                    f"✅ {len(nya_bocker)} nya böcker importerades."
+                )
+    
+                if dubbletter:
+    
+                    st.sidebar.warning(
+                        f"⚠️ {len(dubbletter)} böcker fanns redan och hoppades över:"
+                    )
+    
+                    for bok in dubbletter:
+                        st.sidebar.write("• " + bok)
+                        
+                st.session_state.pop("new_books_import", None)
+                st.rerun()
+            
+    st.sidebar.subheader("➕ Lägg till bok")
+
+    if st.session_state.get("clear_add_fields", False):
+        st.session_state["add_title"] = ""
+        st.session_state["add_author"] = ""
+        st.session_state["add_amount"] = 1
+        st.session_state["clear_add_fields"] = False
+
+    titel = st.sidebar.text_input(
+        "Titel",
+        key="add_title"
+    ).title().strip()
+    
+    författare = st.sidebar.text_input(
+        "Författare",
+        key="add_author"
+    ).title().strip()
+
+    kategori = st.sidebar.selectbox(
+        "Kategori",
+        kategorier,
+        key="add_category"
+    )
+    
+    antal = st.sidebar.number_input(
+        "Antal",
+        min_value=1,
+        step=1,
+        key="add_amount"
+    )
+
+    if st.sidebar.button("Lägg till bok"):
+    
+        if not titel:
+            st.sidebar.error("Titel saknas")
+    
+        elif not författare:
+            st.sidebar.error("Författare saknas")
+    
+        else:
+            response = supabase.table("books") \
+                .select("id") \
+                .execute()
+            
+            ids = [row["id"] for row in response.data]
+            
+            if ids:
+                last_number = max(
+                    int(book_id[1:]) for book_id in ids
+                )
+                next_id = last_number + 1
+            else:
+                next_id = 1
+    
+            book_id = f"B{next_id}"
+    
+            supabase.table("books").insert({
+                "id": book_id,
+                "titel": titel,
+                "forfattare": författare,
+                "kategori": kategori,
+                "antal": int(antal),
+                "tillgangliga": int(antal),
+                "lantagare": ""
+            }).execute()
+    
+            st.sidebar.success(f"Bok tillagd: {titel}")
+
+            st.session_state["clear_add_fields"] = True
+            
+            st.rerun()
+
+    st.sidebar.subheader("❌ Ta bort bok")
+
+        # --- steg 1: välj bok ---
+    remove_choice = st.sidebar.selectbox(
+        "Välj bok att ta bort",
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books(bibliotek)],
+        key="remove_select"
+    )
+    
+    if remove_choice:
+        book_id = remove_choice.split(" - ")[0]
+        titel = bibliotek[book_id]["titel"]
+    
+        # --- klicka initiera delete ---
+        if st.sidebar.button("🗑 Ta bort bok", key="delete_btn"):
+            st.session_state["confirm_delete"] = book_id
+    
+    # --- steg 2: bekräftelse ---
+    if "confirm_delete" in st.session_state:
+        book_id = st.session_state["confirm_delete"]
+        titel = bibliotek[book_id]["titel"]
+    
+        st.sidebar.warning(f"Är du säker på att du vill ta bort '{titel}'?")
+    
+        col1, col2 = st.sidebar.columns(2)
+    
+        with col1:
+            if st.button("Ja, ta bort", key="confirm_delete_btn"):
+                supabase.table("books") \
+                    .delete() \
+                    .eq("id", book_id) \
+                    .execute()
+            
+                st.session_state["success_message"] = f"{titel} borttagen"
+                st.session_state.pop("confirm_delete", None)
+            
+                st.rerun()
+
+        with col2:
+            if st.button("Avbryt", key="cancel_delete_btn"):
+                st.sidebar.info("Avbrutet")
+
+                del st.session_state["confirm_delete"]
+                st.rerun()
+
+    st.sidebar.subheader("✏️ Editera bok")
+
+    edit_choice = st.sidebar.selectbox(
+        "Välj bok att editera",
+        [f"{bid} - {data['titel']}" for bid, data in sorted_books(get_bibliotek())],
+    )
+    
+    if edit_choice:
+        book_id = edit_choice.split(" - ")[0]
+        book = get_bibliotek()[book_id]
+
+        ny_titel = st.sidebar.text_input(
+            "Titel", value=str(book.get("titel", "")), key=f"title_{book_id}"
+        )
+
+        ny_forfattare = st.sidebar.text_input(
+            "Författare", value=str(book.get("författare", "")), key=f"author_{book_id}"
+        )
+
+        ny_kategori = st.sidebar.selectbox(
+            "Kategori",
+            kategorier,
+            index=kategorier.index(book.get("kategori", "Övrigt"))
+                if book.get("kategori", "Övrigt") in kategorier else 0,
+            key=f"category_{book_id}"
+        )
+
+        nytt_antal = st.sidebar.number_input(
+            "Antal",
+            min_value=1,
+            value=int(book.get("antal", 1)),
+            key=f"antal_{book_id}",
+        )
+
+        if st.sidebar.button("Spara ändringar"):
+
+            skillnad = int(nytt_antal) - int(book["antal"])
+        
+            nytt_tillgangligt = max(
+                0,
+                int(book["tillgängliga"]) + skillnad
+            )
+        
+            supabase.table("books").update({
+                "titel": ny_titel,
+                "forfattare": ny_forfattare,
+                "kategori": ny_kategori,
+                "antal": int(nytt_antal),
+                "tillgangliga": nytt_tillgangligt
+            }).eq("id", book_id).execute()
+        
+            st.sidebar.success("Boken uppdaterad!")
+            st.rerun()
