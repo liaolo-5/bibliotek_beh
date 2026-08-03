@@ -38,6 +38,7 @@ def get_bibliotek():
         bibliotek[row["id"]] = {
             "titel": row["titel"],
             "författare": row["forfattare"],
+            "kategori": row.get("kategori", "Övrigt"),
             "antal": row["antal"],
             "tillgängliga": row["tillgangliga"],
             "låntagare": row["lantagare"].split(",") if row["lantagare"] else []
@@ -75,6 +76,7 @@ for book_id, data in sorted_books(bibliotek):
         with col1:
             st.subheader(f"📘 {data['titel']}")
             st.write(f"✍️ {data['författare']}")
+            st.write(f"🏷️ {data['kategori']}")
             st.write(f"📦 Tillgängliga: {data['tillgängliga']}")
 
         with col2:
