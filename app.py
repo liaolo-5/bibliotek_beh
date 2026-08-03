@@ -201,7 +201,7 @@ if password == ADMIN_PASSWORD:
             file_name="bibliotek_backup.csv",
             mime="text/csv"
         )
-    st.sidebar.subheader("📤 Importera böcker")
+    st.sidebar.subheader("📤 Återställ från backup")
 
     uploaded_file = st.sidebar.file_uploader(
         "Välj CSV-fil",
