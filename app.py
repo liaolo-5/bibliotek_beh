@@ -218,15 +218,20 @@ if password == ADMIN_PASSWORD:
     
             for _, row in df.iterrows():
 
-                supabase.table("books").insert({
-                    "id": str(row["id"]),
-                    "titel": str(row["titel"]),
-                    "forfattare": str(row["forfattare"]),
-                    "kategori": str(row.get("kategori", "Övrigt")),
-                    "antal": int(row["antal"]),
-                    "tillgangliga": int(row["tillgangliga"]),
-                    "lantagare": "" if pd.isna(row.get("lantagare")) else str(row["lantagare"])
-                }).execute()
+                try:
+                    supabase.table("books").insert({
+                        "id": str(row["id"]),
+                        "titel": str(row["titel"]),
+                        "forfattare": str(row["forfattare"]),
+                        "kategori": str(row["kategori"]),
+                        "antal": int(row["antal"]),
+                        "tillgangliga": int(row["tillgangliga"]),
+                        "lantagare": "" if pd.isna(row["lantagare"]) else str(row["lantagare"])
+                    }).execute()
+                
+                except Exception as e:
+                    st.sidebar.error(f"Fel vid import av {row['titel']}: {e}")
+                    st.stop()
     
             st.sidebar.success(
                 f"{len(df)} böcker importerade!"
