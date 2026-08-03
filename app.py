@@ -283,22 +283,12 @@ if password == ADMIN_PASSWORD:
                 int(book["tillgängliga"]) + skillnad
             )
         
-            cursor.execute("""
-            UPDATE books
-            SET titel = ?,
-                forfattare = ?,
-                antal = ?,
-                tillgangliga = ?
-            WHERE id = ?
-            """, (
-                ny_titel,
-                ny_forfattare,
-                int(nytt_antal),
-                nytt_tillgangligt,
-                book_id
-            ))
-        
-            conn.commit()
+            supabase.table("books").update({
+                "titel": ny_titel,
+                "forfattare": ny_forfattare,
+                "antal": int(nytt_antal),
+                "tillgangliga": nytt_tillgangligt
+            }).eq("id", book_id).execute()
         
             st.sidebar.success("Boken uppdaterad!")
             st.rerun()
