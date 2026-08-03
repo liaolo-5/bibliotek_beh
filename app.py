@@ -145,18 +145,10 @@ if val_bok:
         data["låntagare"].remove(namn)
         data["tillgängliga"] += 1
 
-        cursor.execute("""
-        UPDATE books
-        SET tillgangliga = ?,
-            lantagare = ?
-        WHERE id = ?
-        """, (
-            data["tillgängliga"],
-            ",".join(data["låntagare"]),
-            book_id
-        ))
-
-        conn.commit()
+        supabase.table("books").update({
+            "tillgangliga": data["tillgängliga"],
+            "lantagare": ",".join(data["låntagare"])
+        }).eq("id", book_id).execute()
 
         st.session_state["return_msg"] = f"🔁 {namn} returnerade '{data['titel']}'"
         st.rerun()
