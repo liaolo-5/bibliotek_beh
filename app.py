@@ -57,11 +57,19 @@ def sorted_books(bibliotek):
 
 # --- SÖK ---
 sok = st.text_input("🔍 Sök bok (titel eller författare)").lower().strip()
+valda_kategorier = ["Alla"] + kategorier
+
+vald_kategori = st.selectbox(
+    "🏷️ Filtrera på kategori",
+    valda_kategorier
+)
 
 result = []
 st.subheader("📖 Böcker i biblioteket")
 
 for book_id, data in sorted_books(bibliotek):
+        if vald_kategori != "Alla" and data["kategori"] != vald_kategori:
+            continue
     titel = str(data.get("titel", "")).lower()
     forfattare = str(data.get("författare", "")).lower()
 
