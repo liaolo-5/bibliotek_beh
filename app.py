@@ -1,14 +1,10 @@
 import streamlit as st
-import sqlite3
 from supabase import create_client
 
 supabase = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_KEY"]
 )
-
-conn = sqlite3.connect("bibliotek.db", check_same_thread=False)
-cursor = conn.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS books (
@@ -28,8 +24,6 @@ ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 st.title("📚 BEH Bibliotek")
 test = supabase.table("books").select("*").execute()
 
-st.write("Kontakt med Supabase fungerar!")
-st.write(test.data)
 
 if "success_message" in st.session_state:
     st.success(st.session_state["success_message"])
@@ -37,12 +31,13 @@ if "success_message" in st.session_state:
 
 
 def get_bibliotek():
-    cursor.execute("""
-    SELECT * FROM books
-    ORDER BY titel COLLATE NOCASE
-    """)
 
-    rows = cursor.fetchall()
+    response = supabase.table("books") \
+        .select("*") \
+        .order("titel") \
+        .execute()
+
+    rows = response.data
 
     bibliotek = {}
 
