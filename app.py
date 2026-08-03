@@ -400,7 +400,8 @@ if password == ADMIN_PASSWORD:
     
                     for bok in dubbletter:
                         st.sidebar.write("• " + bok)
-    
+                        
+                st.session_state.pop("new_books_import", None)
                 st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
