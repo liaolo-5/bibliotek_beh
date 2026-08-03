@@ -217,15 +217,15 @@ if password == ADMIN_PASSWORD:
         if st.sidebar.button("Importera böcker"):
     
             for _, row in df.iterrows():
-    
+
                 supabase.table("books").insert({
-                    "id": row["id"],
-                    "titel": row["titel"],
-                    "forfattare": row["forfattare"],
-                    "kategori": row.get("kategori", "Övrigt"),
+                    "id": str(row["id"]),
+                    "titel": str(row["titel"]),
+                    "forfattare": str(row["forfattare"]),
+                    "kategori": str(row.get("kategori", "Övrigt")),
                     "antal": int(row["antal"]),
                     "tillgangliga": int(row["tillgangliga"]),
-                    "lantagare": row.get("lantagare", "")
+                    "lantagare": "" if pd.isna(row.get("lantagare")) else str(row["lantagare"])
                 }).execute()
     
             st.sidebar.success(
