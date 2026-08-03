@@ -24,17 +24,15 @@ def get_bibliotek():
         .order("titel") \
         .execute()
 
-    rows = response.data
-
     bibliotek = {}
 
-    for row in rows:
-        bibliotek[row[0]] = {
-            "titel": row[1],
-            "författare": row[2],
-            "antal": row[3],
-            "tillgängliga": row[4],
-            "låntagare": row[5].split(",") if row[5] else []
+    for row in response.data:
+        bibliotek[row["id"]] = {
+            "titel": row["titel"],
+            "författare": row["forfattare"],
+            "antal": row["antal"],
+            "tillgängliga": row["tillgangliga"],
+            "låntagare": row["lantagare"].split(",") if row["lantagare"] else []
         }
 
     return bibliotek
