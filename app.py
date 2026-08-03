@@ -6,6 +6,14 @@ supabase = create_client(
     st.secrets["SUPABASE_KEY"]
 )
 
+kategorier = [
+    "Medicin",
+    "Pedagogik",
+    "Psykologi",
+    "Socialt arbete",
+    "Övrigt"
+]
+
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
@@ -177,6 +185,12 @@ if password == ADMIN_PASSWORD:
         "Författare",
         key="add_author"
     ).title().strip()
+
+    kategori = st.sidebar.selectbox(
+        "Kategori",
+        kategorier,
+        key="add_category"
+    )
     
     antal = st.sidebar.number_input(
         "Antal",
@@ -214,6 +228,7 @@ if password == ADMIN_PASSWORD:
                 "id": book_id,
                 "titel": titel,
                 "forfattare": författare,
+                "kategori": kategori,
                 "antal": int(antal),
                 "tillgangliga": int(antal),
                 "lantagare": ""
