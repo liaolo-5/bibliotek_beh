@@ -331,13 +331,13 @@ if password == ADMIN_PASSWORD:
                     .select("titel, forfattare") \
                     .execute()
                 
-                befintliga_bocker = {
-                    (
-                        bok["titel"].strip().lower(),
-                        bok["forfattare"].strip().lower()
-                    )
-                    for bok in response.data
-                }
+                    befintliga_bocker = {
+                        (
+                            bok["titel"].strip().lower(),
+                            bok["forfattare"].strip().lower()
+                        )
+                        for bok in response.data
+                    }
     
                     ids = [
                         int(row["id"][1:])
