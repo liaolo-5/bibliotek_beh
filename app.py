@@ -306,6 +306,14 @@ if password == ADMIN_PASSWORD:
             "Författare", value=str(book.get("författare", "")), key=f"author_{book_id}"
         )
 
+        ny_kategori = st.sidebar.selectbox(
+            "Kategori",
+            kategorier,
+            index=kategorier.index(book.get("kategori", "Övrigt"))
+                if book.get("kategori", "Övrigt") in kategorier else 0,
+            key=f"category_{book_id}"
+        )
+
         nytt_antal = st.sidebar.number_input(
             "Antal",
             min_value=1,
@@ -325,6 +333,7 @@ if password == ADMIN_PASSWORD:
             supabase.table("books").update({
                 "titel": ny_titel,
                 "forfattare": ny_forfattare,
+                "kategori": ny_kategori,
                 "antal": int(nytt_antal),
                 "tillgangliga": nytt_tillgangligt
             }).eq("id", book_id).execute()
