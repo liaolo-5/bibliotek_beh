@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import create_client
 import pandas as pd
+from io import BytesIO
 
 supabase = create_client(
     st.secrets["SUPABASE_URL"],
@@ -200,7 +201,38 @@ if password == ADMIN_PASSWORD:
             file_name="bibliotek_backup.csv",
             mime="text/csv"
         )
+    st.sidebar.subheader("📤 Importera böcker")
 
+    uploaded_file = st.sidebar.file_uploader(
+        "Välj CSV-fil",
+        type=["csv"]
+    )
+    
+    if uploaded_file:
+    
+        df = pd.read_csv(uploaded_file)
+    
+        st.sidebar.write(f"Antal böcker hittade: {len(df)}")
+    
+        if st.sidebar.button("Importera böcker"):
+    
+            for _, row in df.iterrows():
+    
+                supabase.table("books").insert({
+                    "id": row["id"],
+                    "titel": row["titel"],
+                    "forfattare": row["forfattare"],
+                    "kategori": row.get("kategori", "Övrigt"),
+                    "antal": int(row["antal"]),
+                    "tillgangliga": int(row["tillgangliga"]),
+                    "lantagare": row.get("lantagare", "")
+                }).execute()
+    
+            st.sidebar.success(
+                f"{len(df)} böcker importerade!"
+            )
+    
+            st.rerun()
     st.sidebar.subheader("➕ Lägg till bok")
 
     if st.session_state.get("clear_add_fields", False):
