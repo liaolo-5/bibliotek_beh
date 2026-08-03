@@ -6,19 +6,6 @@ supabase = create_client(
     st.secrets["SUPABASE_KEY"]
 )
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS books (
-    id TEXT PRIMARY KEY,
-    titel TEXT,
-    forfattare TEXT,
-    antal INTEGER,
-    tillgangliga INTEGER,
-    lantagare TEXT
-)
-""")
-
-conn.commit()
-
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
