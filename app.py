@@ -162,6 +162,12 @@ if password == ADMIN_PASSWORD:
 
     st.sidebar.subheader("➕ Lägg till bok")
 
+    if st.session_state.get("clear_add_fields", False):
+        st.session_state["add_title"] = ""
+        st.session_state["add_author"] = ""
+        st.session_state["add_amount"] = 1
+        st.session_state["clear_add_fields"] = False
+
     titel = st.sidebar.text_input(
         "Titel",
         key="add_title"
@@ -215,9 +221,7 @@ if password == ADMIN_PASSWORD:
     
             st.sidebar.success(f"Bok tillagd: {titel}")
 
-            st.session_state["add_title"] = ""
-            st.session_state["add_author"] = ""
-            st.session_state["add_amount"] = 1
+            st.session_state["clear_add_fields"] = True
             
             st.rerun()
 
