@@ -239,19 +239,27 @@ if password == ADMIN_PASSWORD:
     
             st.rerun()
 
-    st.sidebar.subheader("📚 Importera nya böcker")
+    # -------------------------
+# IMPORTERA NYA BÖCKER
+# -------------------------
 
-    new_file = st.sidebar.file_uploader(
-        "Välj CSV med nya böcker",
+    st.sidebar.subheader("📚 Importera nya böcker")
+    
+    uploaded_file = st.sidebar.file_uploader(
+        "Välj CSV-fil",
         type=["csv"],
-        key="new_books_import"
+        key="import_books_file"
     )
     
-    if new_file:
+    if uploaded_file:
     
-        # Läs svensk CSV
-        df = pd.read_csv(new_file, sep=";")
-        df.columns = df.columns.str.lower().str.strip()
+        df = pd.read_csv(uploaded_file, sep=";")
+    
+        df.columns = (
+            df.columns
+            .str.lower()
+            .str.strip()
+        )
     
         required_columns = [
             "titel",
@@ -263,146 +271,165 @@ if password == ADMIN_PASSWORD:
         if not all(col in df.columns for col in required_columns):
     
             st.sidebar.error(
-                "CSV-filen måste innehålla kolumnerna: titel, forfattare, kategori och antal."
+                "CSV måste innehålla: titel, forfattare, kategori, antal"
             )
     
         else:
     
-            tillatna_kategorier = {
-                "medicin": "Medicin",
-                "pedagogik": "Pedagogik",
-                "psykologi": "Psykologi",
-                "socialt arbete": "Socialt arbete",
-                "övrigt": "Övrigt"
-            }
+            st.sidebar.info(
+                f"{len(df)} rader hittades i filen."
+            )
     
-            # Hämta alla böcker en gång
-            response = supabase.table("books").select(
-                "id, titel, forfattare"
-            ).execute()
     
-            befintliga_bocker = {
-                (
-                    bok["titel"].strip().lower(),
-                    bok["forfattare"].strip().lower()
-                )
-                for bok in response.data
-            }
+            if st.sidebar.button(
+                "Importera nya böcker",
+                key="import_button"
+            ):
     
-            ids = [
-                int(bok["id"][1:])
-                for bok in response.data
-                if bok["id"].startswith("B")
-            ]
+                tillatna_kategorier = {
+                    "medicin": "Medicin",
+                    "pedagogik": "Pedagogik",
+                    "psykologi": "Psykologi",
+                    "socialt arbete": "Socialt arbete",
+                    "övrigt": "Övrigt"
+                }
     
-            next_id = max(ids, default=0) + 1
     
-            fel = []
-            dubbletter = []
-            nya_bocker = []
+                # Hämta befintliga böcker
+                response = supabase.table("books") \
+                    .select("id, titel, forfattare") \
+                    .execute()
     
-            for index, row in df.iterrows():
     
-                rad = index + 2
-    
-                titel = str(row["titel"]).strip()
-                forfattare = str(row["forfattare"]).strip()
-                kategori = str(row["kategori"]).strip()
-    
-                # Titel
-                if titel == "" or pd.isna(row["titel"]):
-                    fel.append(f"Rad {rad}: titel saknas")
-                    continue
-    
-                # Författare
-                if forfattare == "" or pd.isna(row["forfattare"]):
-                    fel.append(f"Rad {rad}: författare saknas")
-                    continue
-    
-                # Kategori
-                if kategori == "":
-                    fel.append(f"Rad {rad}: kategori saknas")
-                    continue
-    
-                kategori_key = kategori.lower()
-    
-                if kategori_key not in tillatna_kategorier:
-                    fel.append(
-                        f"Rad {rad}: okänd kategori '{kategori}'"
+                befintliga = {
+                    (
+                        bok["titel"].strip().lower(),
+                        bok["forfattare"].strip().lower()
                     )
-                    continue
+                    for bok in response.data
+                }
     
-                # Antal
-                try:
-                    antal = int(row["antal"])
     
-                    if antal < 1:
+                ids = [
+                    int(bok["id"][1:])
+                    for bok in response.data
+                    if bok["id"].startswith("B")
+                ]
+    
+                next_id = max(ids, default=0) + 1
+    
+    
+                fel = []
+                dubbletter = []
+                importerade = 0
+    
+    
+                for index, row in df.iterrows():
+    
+                    rad = index + 2
+    
+                    titel = str(row["titel"]).strip()
+                    forfattare = str(row["forfattare"]).strip()
+                    kategori = str(row["kategori"]).strip()
+    
+    
+                    if not titel:
                         fel.append(
-                            f"Rad {rad}: antal måste vara minst 1"
+                            f"Rad {rad}: titel saknas"
                         )
                         continue
     
-                except:
-                    fel.append(
-                        f"Rad {rad}: antal måste vara ett heltal"
+    
+                    if not forfattare:
+                        fel.append(
+                            f"Rad {rad}: författare saknas"
+                        )
+                        continue
+    
+    
+                    kategori_key = kategori.lower()
+    
+                    if kategori_key not in tillatna_kategorier:
+                        fel.append(
+                            f"Rad {rad}: okänd kategori {kategori}"
+                        )
+                        continue
+    
+    
+                    try:
+                        antal = int(row["antal"])
+    
+                        if antal < 1:
+                            raise ValueError
+    
+                    except:
+                        fel.append(
+                            f"Rad {rad}: antal måste vara heltal"
+                        )
+                        continue
+    
+    
+                    boknyckel = (
+                        titel.lower(),
+                        forfattare.lower()
                     )
-                    continue
     
-                # Dubblett
-                nyckel = (
-                    titel.lower(),
-                    forfattare.lower()
-                )
     
-                if nyckel in befintliga_bocker:
-                    dubbletter.append(
-                        f"{titel} – {forfattare}"
+                    if boknyckel in befintliga:
+    
+                        dubbletter.append(
+                            f"{titel} - {forfattare}"
+                        )
+    
+                        continue
+    
+    
+                    supabase.table("books").insert({
+    
+                        "id": f"B{next_id}",
+                        "titel": titel,
+                        "forfattare": forfattare,
+                        "kategori": tillatna_kategorier[kategori_key],
+                        "antal": antal,
+                        "tillgangliga": antal,
+                        "lantagare": ""
+    
+                    }).execute()
+    
+    
+                    befintliga.add(boknyckel)
+    
+                    next_id += 1
+                    importerade += 1
+    
+    
+                if fel:
+    
+                    st.sidebar.error(
+                        "Importen klar med fel:"
                     )
-                    continue
     
-                nya_bocker.append({
-                    "id": f"B{next_id}",
-                    "titel": titel,
-                    "forfattare": forfattare,
-                    "kategori": tillatna_kategorier[kategori_key],
-                    "antal": antal,
-                    "tillgangliga": antal,
-                    "lantagare": ""
-                })
+                    for feltext in fel:
+                        st.sidebar.write(
+                            "⚠️ " + feltext
+                        )
     
-                next_id += 1
-    
-            # Visa fel
-            if fel:
-    
-                st.sidebar.error(
-                    "Importen avbröts eftersom fel hittades:"
-                )
-    
-                for text in fel:
-                    st.sidebar.write("⚠️ " + text)
-    
-            else:
-    
-                # Importera endast nya böcker
-                for bok in nya_bocker:
-                    supabase.table("books").insert(bok).execute()
     
                 st.sidebar.success(
-                    f"✅ {len(nya_bocker)} nya böcker importerades."
+                    f"✅ {importerade} böcker importerades"
                 )
+    
     
                 if dubbletter:
     
                     st.sidebar.warning(
-                        f"⚠️ {len(dubbletter)} böcker fanns redan och hoppades över:"
+                        f"⚠️ {len(dubbletter)} dubbletter hoppades över"
                     )
     
                     for bok in dubbletter:
-                        st.sidebar.write("• " + bok)
-                        
-                st.session_state.pop("new_books_import", None)
-                st.rerun()
+                        st.sidebar.write(
+                            "• " + bok
+                        )
             
     st.sidebar.subheader("➕ Lägg till bok")
 
