@@ -326,10 +326,10 @@ if password == ADMIN_PASSWORD:
     
     
                 else:
-    
+
                     response = supabase.table("books") \
-                    .select("titel, forfattare") \
-                    .execute()
+                        .select("titel, forfattare, id") \
+                        .execute()
                 
                     befintliga_bocker = {
                         (
@@ -338,13 +338,13 @@ if password == ADMIN_PASSWORD:
                         )
                         for bok in response.data
                     }
-    
+                
                     ids = [
                         int(row["id"][1:])
                         for row in response.data
                         if row["id"].startswith("B")
                     ]
-    
+                
                     next_id = max(ids, default=0) + 1
     
     
