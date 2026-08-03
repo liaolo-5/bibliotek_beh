@@ -338,7 +338,7 @@ if password == ADMIN_PASSWORD:
                             "id": f"B{next_id}",
                             "titel": str(row["titel"]).strip(),
                             "forfattare": str(row["forfattare"]).strip(),
-                            ""kategori": tillatna_kategorier[str(row["kategori"]).strip().lower()],
+                            "kategori": tillatna_kategorier[str(row["kategori"]).strip().lower()],
                             "antal": int(row["antal"]),
                             "tillgangliga": int(row["antal"]),
                             "lantagare": ""
