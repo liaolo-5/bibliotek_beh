@@ -62,6 +62,7 @@ result = []
 st.subheader("📖 Böcker i biblioteket")
 
 for book_id, data in sorted_books(bibliotek):
+    st.write(data)
     titel = str(data.get("titel", "")).lower()
     forfattare = str(data.get("författare", "")).lower()
 
