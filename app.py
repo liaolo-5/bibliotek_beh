@@ -231,8 +231,10 @@ if password == ADMIN_PASSWORD:
     
         with col1:
             if st.button("Ja, ta bort", key="confirm_delete_btn"):
-                cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
-                conn.commit()
+                supabase.table("books") \
+                    .delete() \
+                    .eq("id", book_id) \
+                    .execute()
             
                 st.session_state["success_message"] = f"{titel} borttagen"
                 st.session_state.pop("confirm_delete", None)
