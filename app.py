@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase import create_client
+import pandas as pd
 
 supabase = create_client(
     st.secrets["SUPABASE_URL"],
@@ -177,6 +178,28 @@ password = st.sidebar.text_input("Lösenord", type="password")
 
 if password == ADMIN_PASSWORD:
     st.sidebar.success("Åtkomst beviljad")
+
+    st.sidebar.subheader("💾 Backup")
+
+    if st.sidebar.button("Exportera bibliotek"):
+    
+        response = supabase.table("books") \
+            .select("*") \
+            .execute()
+    
+        df = pd.DataFrame(response.data)
+    
+        csv = df.to_csv(
+            index=False,
+            encoding="utf-8-sig"
+        )
+    
+        st.sidebar.download_button(
+            label="📥 Ladda ner backup",
+            data=csv,
+            file_name="bibliotek_backup.csv",
+            mime="text/csv"
+        )
 
     st.sidebar.subheader("➕ Lägg till bok")
 
