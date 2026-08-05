@@ -41,9 +41,9 @@ def get_bibliotek():
             "titel": row["titel"],
             "författare": row["forfattare"],
             "kategori": row.get("kategori", "Övrigt"),
-            "antal": row["antal"],
-            "tillgängliga": row["tillgangliga"],
-            "låntagare": row["lantagare"].split(",") if row["lantagare"] else []
+            "antal": row.get("antal", 1),
+            "tillgängliga": row.get("tillgangliga", 0),
+            "låntagare": row.get("lantagare", "").split(",") if row.get("lantagare") else []
         }
 
     return bibliotek
@@ -148,7 +148,14 @@ valbara_bocker = [
     if len(data["låntagare"]) > 0
 ]
 
-val_bok = st.sidebar.selectbox("Välj bok", valbara_bocker)
+if valbara_bocker:
+    val_bok = st.sidebar.selectbox(
+        "Välj bok",
+        valbara_bocker
+    )
+else:
+    st.sidebar.info("Det finns inga utlånade böcker att returnera.")
+    val_bok = None
 
 
 if val_bok:
@@ -588,23 +595,23 @@ if password == ADMIN_PASSWORD:
                 key=f"antal_{book_id}",
             )
 
-        if st.sidebar.button("Spara ändringar"):
-
-            skillnad = int(nytt_antal) - int(book["antal"])
-        
-            nytt_tillgangligt = max(
-                0,
-                int(book["tillgängliga"]) + skillnad
-            )
-        
-            supabase.table("books").update({
-                "titel": ny_titel,
-                "forfattare": ny_forfattare,
-                "kategori": ny_kategori,
-                "antal": int(nytt_antal),
-                "tillgangliga": nytt_tillgangligt
-            }).eq("id", book_id).execute()
-        
-            st.sidebar.success("Boken uppdaterad!")
-            st.rerun()
+            if st.sidebar.button("Spara ändringar"):
+    
+                skillnad = int(nytt_antal) - int(book["antal"])
+            
+                nytt_tillgangligt = max(
+                    0,
+                    int(book["tillgängliga"]) + skillnad
+                )
+            
+                supabase.table("books").update({
+                    "titel": ny_titel,
+                    "forfattare": ny_forfattare,
+                    "kategori": ny_kategori,
+                    "antal": int(nytt_antal),
+                    "tillgangliga": nytt_tillgangligt
+                }).eq("id", book_id).execute()
+            
+                st.sidebar.success("Boken uppdaterad!")
+                st.rerun()
 
