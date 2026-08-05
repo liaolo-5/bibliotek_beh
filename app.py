@@ -442,7 +442,7 @@ if password == ADMIN_PASSWORD:
                     "dubbletter": dubbletter
                 }
                 
-                st.sidebar.write("DEBUG sparar resultat:", st.session_state["import_result"])
+                
                 st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
