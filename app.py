@@ -358,6 +358,12 @@ if password == ADMIN_PASSWORD:
     
                     kategori_key = kategori.lower()
     
+                    if not kategori:
+                        fel.append(
+                            f"Rad {rad}: kategori saknas"
+                        )
+                        continue
+                    
                     if kategori_key not in tillatna_kategorier:
                         fel.append(
                             f"Rad {rad}: okänd kategori {kategori}"
@@ -439,6 +445,8 @@ if password == ADMIN_PASSWORD:
                         st.sidebar.write(
                             "• " + bok
                         )
+                if importerade > 0:
+                    st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
 
