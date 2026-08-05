@@ -42,14 +42,6 @@ if "import_result" in st.session_state:
         for bok in result["dubbletter"]:
             st.sidebar.write("• " + bok)
 
-    del st.session_state["import_result"]
-    
-if st.session_state.get("import_done"):
-    st.sidebar.success("Importen är klar!")
-    del st.session_state["import_done"]
-#test = supabase.table("books").select("*").execute()
-
-
 if "success_message" in st.session_state:
     st.success(st.session_state["success_message"])
     del st.session_state["success_message"]
@@ -238,14 +230,14 @@ if password == ADMIN_PASSWORD:
         )
     st.sidebar.subheader("📤 Återställ från backup")
 
-    uploaded_file = st.sidebar.file_uploader(
+    backup_file = st.sidebar.file_uploader(
         "Välj CSV-fil",
         type=["csv"]
     )
     
-    if uploaded_file:
+    if backup_file:
     
-        df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(backup_file)
     
         st.sidebar.write(f"Antal böcker hittade: {len(df)}")
     
@@ -444,15 +436,13 @@ if password == ADMIN_PASSWORD:
                     importerade += 1
     
     
-                if fel or dubbletter or importerade:
-
-                    st.session_state["import_result"] = {
-                        "importerade": importerade,
-                        "fel": fel,
-                        "dubbletter": dubbletter
-                    }
+                st.session_state["import_result"] = {
+                    "importerade": importerade,
+                    "fel": fel,
+                    "dubbletter": dubbletter
+                }
                 
-                    st.rerun()
+                st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
 
