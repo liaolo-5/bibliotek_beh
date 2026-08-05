@@ -19,6 +19,31 @@ kategorier = [
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
+if "import_result" in st.session_state:
+
+    result = st.session_state["import_result"]
+
+    if result["importerade"]:
+        st.sidebar.success(
+            f"✅ {result['importerade']} böcker importerades"
+        )
+
+    if result["fel"]:
+        st.sidebar.error("Importen hade fel:")
+
+        for feltext in result["fel"]:
+            st.sidebar.write("⚠️ " + feltext)
+
+    if result["dubbletter"]:
+        st.sidebar.warning(
+            f"⚠️ {len(result['dubbletter'])} dubbletter hoppades över"
+        )
+
+        for bok in result["dubbletter"]:
+            st.sidebar.write("• " + bok)
+
+    del st.session_state["import_result"]
+    
 if st.session_state.get("import_done"):
     st.sidebar.success("Importen är klar!")
     del st.session_state["import_done"]
@@ -419,35 +444,15 @@ if password == ADMIN_PASSWORD:
                     importerade += 1
     
     
-                if fel:
-    
-                    st.sidebar.error(
-                        "Importen klar med fel:"
-                    )
-    
-                    for feltext in fel:
-                        st.sidebar.write(
-                            "⚠️ " + feltext
-                        )
-    
-    
-                st.sidebar.success(
-                    f"✅ {importerade} böcker importerades"
-                )
-    
-    
-                if dubbletter:
-    
-                    st.sidebar.warning(
-                        f"⚠️ {len(dubbletter)} dubbletter hoppades över"
-                    )
-    
-                    for bok in dubbletter:
-                        st.sidebar.write(
-                            "• " + bok
-                        )
-                st.session_state["import_done"] = True
-                st.rerun()
+                if fel or dubbletter or importerade:
+
+                    st.session_state["import_result"] = {
+                        "importerade": importerade,
+                        "fel": fel,
+                        "dubbletter": dubbletter
+                    }
+                
+                    st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
 
