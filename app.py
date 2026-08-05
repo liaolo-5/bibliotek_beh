@@ -41,6 +41,7 @@ if "import_result" in st.session_state:
 
         for bok in result["dubbletter"]:
             st.write("• " + bok)
+    del st.session_state["import_result"] 
 
 if "success_message" in st.session_state:
     st.success(st.session_state["success_message"])
