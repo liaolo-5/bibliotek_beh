@@ -26,11 +26,13 @@ if "import_result" in st.session_state:
 
     if result["importerade"]:
         st.sidebar.success(
-            f"✅ {result['importerade']} böcker importerades"
+            st.success(
+                f"✅ {result['importerade']} böcker importerades"
+            )
         )
 
     if result["fel"]:
-        st.sidebar.error("Importen hade fel:")
+        st.error("Importen hade fel:")
 
         for feltext in result["fel"]:
             st.sidebar.write("⚠️ " + feltext)
@@ -358,7 +360,7 @@ if password == ADMIN_PASSWORD:
     
                     titel = str(row["titel"]).strip()
                     forfattare = str(row["forfattare"]).strip()
-                    kategori = str(row["kategori"]).strip()
+                    kategori = "" if pd.isna(row["kategori"]) else str(row["kategori"]).strip()
     
     
                     if not titel:
