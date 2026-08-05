@@ -547,40 +547,46 @@ if password == ADMIN_PASSWORD:
 
                 del st.session_state["confirm_delete"]
                 st.rerun()
-
-    st.sidebar.subheader("✏️ Editera bok")
-
-    edit_choice = st.sidebar.selectbox(
-        "Välj bok att editera",
-        [f"{bid} - {data['titel']}" for bid, data in sorted_books(get_bibliotek())],
-    )
     
-    if edit_choice:
-        book_id = edit_choice.split(" - ")[0]
-        book = get_bibliotek()[book_id]
+    st.sidebar.subheader("✏️ Editera bok")
+    bibliotek = get_bibliotek()
 
-        ny_titel = st.sidebar.text_input(
-            "Titel", value=str(book.get("titel", "")), key=f"title_{book_id}"
+    if not bibliotek:
+        st.sidebar.info("Det finns inga böcker att editera ännu.")
+    
+    else:
+    
+        edit_choice = st.sidebar.selectbox(
+            "Välj bok att editera",
+            [f"{bid} - {data['titel']}" for bid, data in sorted_books(bibliotek)],
         )
-
-        ny_forfattare = st.sidebar.text_input(
-            "Författare", value=str(book.get("författare", "")), key=f"author_{book_id}"
-        )
-
-        ny_kategori = st.sidebar.selectbox(
-            "Kategori",
-            kategorier,
-            index=kategorier.index(book.get("kategori", "Övrigt"))
-                if book.get("kategori", "Övrigt") in kategorier else 0,
-            key=f"category_{book_id}"
-        )
-
-        nytt_antal = st.sidebar.number_input(
-            "Antal",
-            min_value=1,
-            value=int(book.get("antal", 1)),
-            key=f"antal_{book_id}",
-        )
+    
+        if edit_choice:
+            book_id = edit_choice.split(" - ")[0]
+            book = get_bibliotek()[book_id]
+    
+            ny_titel = st.sidebar.text_input(
+                "Titel", value=str(book.get("titel", "")), key=f"title_{book_id}"
+            )
+    
+            ny_forfattare = st.sidebar.text_input(
+                "Författare", value=str(book.get("författare", "")), key=f"author_{book_id}"
+            )
+    
+            ny_kategori = st.sidebar.selectbox(
+                "Kategori",
+                kategorier,
+                index=kategorier.index(book.get("kategori", "Övrigt"))
+                    if book.get("kategori", "Övrigt") in kategorier else 0,
+                key=f"category_{book_id}"
+            )
+    
+            nytt_antal = st.sidebar.number_input(
+                "Antal",
+                min_value=1,
+                value=int(book.get("antal", 1)),
+                key=f"antal_{book_id}",
+            )
 
         if st.sidebar.button("Spara ändringar"):
 
