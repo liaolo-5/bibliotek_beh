@@ -19,7 +19,9 @@ kategorier = [
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
-st.write("Startar app...")
+if st.session_state.get("import_done"):
+    st.sidebar.success("Importen är klar!")
+    del st.session_state["import_done"]
 #test = supabase.table("books").select("*").execute()
 
 
@@ -50,7 +52,6 @@ def get_bibliotek():
     return bibliotek
 
 bibliotek = get_bibliotek()
-st.write("Supabase laddad")
 
 
 def sorted_books(bibliotek):
@@ -445,8 +446,8 @@ if password == ADMIN_PASSWORD:
                         st.sidebar.write(
                             "• " + bok
                         )
-                if importerade > 0:
-                    st.rerun()
+                st.session_state["import_done"] = True
+                st.rerun()
             
     st.sidebar.subheader("➕ Lägg till bok")
 
