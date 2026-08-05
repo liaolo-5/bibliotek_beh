@@ -19,7 +19,7 @@ kategorier = [
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
-test = supabase.table("books").select("*").execute()
+#test = supabase.table("books").select("*").execute()
 
 
 if "success_message" in st.session_state:
