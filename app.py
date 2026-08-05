@@ -24,26 +24,23 @@ if "import_result" in st.session_state:
 
     result = st.session_state["import_result"]
 
-    if result["importerade"]:
-        st.sidebar.success(
-            st.success(
-                f"✅ {result['importerade']} böcker importerades"
-            )
-        )
+    st.success(
+        f"✅ {result['importerade']} böcker importerades"
+    )
 
     if result["fel"]:
         st.error("Importen hade fel:")
 
         for feltext in result["fel"]:
-            st.sidebar.write("⚠️ " + feltext)
+            st.write("⚠️ " + feltext)
 
     if result["dubbletter"]:
-        st.sidebar.warning(
+        st.warning(
             f"⚠️ {len(result['dubbletter'])} dubbletter hoppades över"
         )
 
         for bok in result["dubbletter"]:
-            st.sidebar.write("• " + bok)
+            st.write("• " + bok)
 
 if "success_message" in st.session_state:
     st.success(st.session_state["success_message"])
