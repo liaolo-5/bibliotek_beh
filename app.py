@@ -19,6 +19,7 @@ kategorier = [
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
+st.write("DEBUG:", st.session_state)
 if "import_result" in st.session_state:
 
     result = st.session_state["import_result"]
