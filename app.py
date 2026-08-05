@@ -19,6 +19,7 @@ kategorier = [
 ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 
 st.title("📚 BEH Bibliotek")
+st.write("Startar app...")
 #test = supabase.table("books").select("*").execute()
 
 
@@ -49,6 +50,7 @@ def get_bibliotek():
     return bibliotek
 
 bibliotek = get_bibliotek()
+st.write("Supabase laddad")
 
 
 def sorted_books(bibliotek):
